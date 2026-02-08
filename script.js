@@ -3,10 +3,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // DOM Elements
     const questionEl = document.getElementById("question");
-    const num1El = document.getElementById("num1");
-    const num2El = document.getElementById("num2");
-    const operatorEl = document.getElementById("operator");
-    const resultPlaceholder = document.querySelector(".result-placeholder");
     const answerInput = document.getElementById("answer-input");
     const submitBtn = document.getElementById("submit-btn");
     const feedbackEl = document.getElementById("feedback");
@@ -14,20 +10,59 @@ document.addEventListener("DOMContentLoaded", () => {
     const levelDisplay = document.getElementById("level-display");
     const difficultySelect = document.getElementById("difficulty");
     const resetBtn = document.getElementById("reset-btn");
+    
+    // Mode Switcher Elements
+    const modeArithmeticBtn = document.getElementById("mode-arithmetic");
+    const modeLogicBtn = document.getElementById("mode-logic");
+
+    // Generators
+    const logicGenerator = new window.LogicGenerator();
 
     // Game State
     let currentScore = 0;
     let currentDifficulty = 1;
     let currentAnswer = 0;
-    let isGameOver = false;
+    let currentMode = "arithmetic"; // 'arithmetic' or 'logic'
+    let currentExplanation = "";
 
     // Difficulty Config
+    // Arithmetic:
     // Level 1: 1-10 (+/-), no carry/borrow
     // Level 2: 1-20 (+/-), with carry/borrow
     // Level 3: 1-100 (+/-)
     // Level 4: 1-9 (Multiplication)
 
+    function setMode(mode) {
+        currentMode = mode;
+        currentScore = 0;
+        scoreDisplay.textContent = `得分: 0`;
+        
+        // UI Updates
+        if (mode === "arithmetic") {
+            modeArithmeticBtn.classList.add("active");
+            modeLogicBtn.classList.remove("active");
+        } else {
+            modeArithmeticBtn.classList.remove("active");
+            modeLogicBtn.classList.add("active");
+        }
+        
+        generateQuestion(currentDifficulty);
+    }
+
     function generateQuestion(level) {
+        answerInput.value = "";
+        answerInput.focus();
+        feedbackEl.textContent = "";
+        feedbackEl.className = "feedback";
+
+        if (currentMode === "arithmetic") {
+            generateArithmeticQuestion(level);
+        } else {
+            generateLogicQuestion(level);
+        }
+    }
+
+    function generateArithmeticQuestion(level) {
         let num1, num2, operator;
         let valid = false;
 
@@ -75,14 +110,22 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Update UI
-        num1El.textContent = num1;
-        num2El.textContent = num2;
-        operatorEl.textContent = operator;
-        answerInput.value = "";
-        answerInput.focus();
-        feedbackEl.textContent = "";
-        feedbackEl.className = "feedback";
+        // Render Standard Layout
+        questionEl.innerHTML = `
+            <span class="operand">${num1}</span>
+            <span class="operator">${operator}</span>
+            <span class="operand">${num2}</span>
+            <span class="equals">=</span>
+            <span class="result-placeholder">?</span>
+        `;
+        currentExplanation = ""; // No explanation for simple arithmetic yet
+    }
+
+    function generateLogicQuestion(level) {
+        const result = logicGenerator.generate(level);
+        questionEl.innerHTML = result.html;
+        currentAnswer = result.answer;
+        currentExplanation = result.explanation;
     }
 
     function checkAnswer() {
@@ -104,15 +147,20 @@ document.addEventListener("DOMContentLoaded", () => {
             // Auto-next after short delay
             setTimeout(() => {
                 generateQuestion(currentDifficulty);
-            }, 1000);
+            }, 1500);
         } else {
             // Wrong
-            feedbackEl.textContent = `❌ 错误！正确答案是 ${currentAnswer}`;
+            let msg = `❌ 错误！正确答案是 ${currentAnswer}`;
+            if (currentExplanation) {
+                msg += `<br><span style="font-size: 1rem; color: #666;">💡 ${currentExplanation}</span>`;
+            }
+            feedbackEl.innerHTML = msg;
             feedbackEl.className = "feedback error";
-            // Allow retry or show next? Let's show next after delay.
+            
+            // For logic puzzles, maybe give them more time to read explanation
             setTimeout(() => {
                 generateQuestion(currentDifficulty);
-            }, 2000);
+            }, 4000);
         }
     }
 
@@ -139,6 +187,12 @@ document.addEventListener("DOMContentLoaded", () => {
         generateQuestion(currentDifficulty);
     });
 
+    // Mode Switchers
+    if (modeArithmeticBtn && modeLogicBtn) {
+        modeArithmeticBtn.addEventListener("click", () => setMode("arithmetic"));
+        modeLogicBtn.addEventListener("click", () => setMode("logic"));
+    }
+
     // Initial Start
-    generateQuestion(currentDifficulty);
+    setMode("arithmetic");
 });

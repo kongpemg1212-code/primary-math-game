@@ -12,6 +12,12 @@
         <!-- 头部区域 -->
         <header>
             <h1>🔢 数学小天才</h1>
+            
+            <div class="mode-switcher">
+                <button id="mode-arithmetic" class="mode-btn active">🧮 口算</button>
+                <button id="mode-logic" class="mode-btn">🧩 推理</button>
+            </div>
+
             <div class="stats-bar">
                 <div class="stat-item" id="score-display">得分: 0</div>
                 <div class="stat-item" id="level-display">难度: Level 1</div>
@@ -53,6 +59,7 @@
         </footer>
     </div>
 
+    <script src="logic-generator.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
